@@ -69,7 +69,7 @@
                 <div v-else>
                     <p>Your cart is empty.</p>
                 </div>
-                
+
 
                 <form>
                     <p><strong>First Name:</strong> <input v-model.trim="order.firstName" /></p>
@@ -93,7 +93,7 @@
             data: {
                 showProduct: true,
                 sitename: 'Lessons',
-                products: products,
+                products: [],
                 cart: [],
                 searchQuery: "",
                 sortBy: "name",
@@ -102,6 +102,9 @@
                     lastName: "",
                     number: "",
                 },
+            },
+            created() {
+                this.fetchProducts();
             },
             methods: {
                 addToCart: function (product) {
