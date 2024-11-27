@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Vue.js</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
+    <script src="products.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <h1 v-text="sitename">{{sitename}}</h1>
+            <button v-on:click="showCheckout">
+                {{cartItemCount}}
+                <i class="fas fa-shopping-cart"></i> Checkout
+            </button>
+            <input type="text" v-model="searchQuery" placeholder="Search for products..." class="search-bar" />
+            <select v-on:change="setSortBy($event.target.value)">
+                <option value="name">Sort by Name</option>
+                <option value="price">Sort by Price</option>
+                <option value="inventory">Sort by Inventory</option>
+            </select>
+        </header>
+
+        <main>
+            <div v-if="showProduct">
+                <div v-for="product in filteredProducts" :key="product.id" class="product">
+                    <figure>
+                        <img v-bind:src="product.image" alt="Product Image" />
+                    </figure>
+                    <h2 v-text="product.title"></h2>
+                    <p v-html="product.description">Description:</p>
+                    <p v-text="product.availability">Availability:</p>
+                    <p>Price: {{product.price}}</p>
+                    <button v-on:click="addToCart(product)" v-if="canAddToCart(product)">
+                        Add to Cart
+                    </button>
+                    <button disabled v-else>
+                        Add to Cart
+                    </button>
+                    <span v-if="product.availableInventory === cartCount(product.id)"> All Out </span>
+                    <span v-else-if="product.availableInventory - cartCount(product.id) < 5">
+                        Only {{product.availableInventory - cartCount(product.id)}} left!
+                    </span>
+                    <span v-else> Buy Now </span>
+
+                    <div>
+                        <span v-for="n in product.rating">★</span>
+                        <span v-for="n in 5 - product.rating">☆</span>
+                    </div>
+                </div>
+            </div>
+
+            <div v-else>
+                <h2>Checkout</h2>
+                <div v-if="cartItems.length > 0">
+                    <div v-for="item in cartItems" :key="item.id" class="checkout-item">
+                        <h3>{{ item.title }}</h3>
+                        <p>Price: {{ item.price }}</p>
+                        <p>Quantity: {{ cartCount(item.id) }}</p>
+                        <button v-on:click="removeFromCart(item)">Delete Item</button>
+                    </div>
+                    <p><strong>Total:</strong> {{ cartTotal }}</p>
+                    <button v-on:click="submitForm">Place Order</button>
+                </div>
+                <div v-else>
+                    <p>Your cart is empty.</p>
+                </div>
+                
+
+                <form>
+                    <p><strong>First Name:</strong> <input v-model.trim="order.firstName" /></p>
+                    <p><strong>Last Name:</strong> <input v-model.trim="order.lastName" /></p>
+                    <p><strong>Number:</strong> <input v-model="order.number" /></p>
+                </form>
+
+                <h2>Order Information</h2>
+                <p>First Name: {{order.firstName}}</p>
+                <p>Last Name: {{order.lastName}}</p>
+                <p>Number: {{order.number}}</p>
+
+                <button v-on:click="submitForm">Place Order</button>
+            </div>
+        </main>
+    </div>
+
+    <script type="text/javascript">
+        let webstore = new Vue({
+            el: '#app',
+            data: {
+                showProduct: true,
+                sitename: 'Lessons',
+                products: products,
+                cart: [],
+                searchQuery: "",
+                sortBy: "name",
+                order: {
+                    firstName: "",
+                    lastName: "",
+                    number: "",
+                },
+            },
+            methods: {
+                addToCart: function (product) {
+                    this.cart.push(product.id);
+                },
+                removeFromCart: function (item) {
+                    const index = this.cart.findIndex(cartId => cartId === item.id);
+                    if (index !== -1) {
+                        this.cart.splice(index, 1); // Remove one instance of the product ID
+                    }
+                },
+                showCheckout() {
+                    this.showProduct = !this.showProduct;
+                },
+                submitForm() {
+                    alert("Order submitted");
+                },
+                canAddToCart(product) {
+                    return product.availableInventory > this.cartCount(product.id);
+                },
+                cartCount(id) {
+                    return this.cart.filter(cartId => cartId === id).length;
+                },
+                setSortBy(criteria) {
+                    this.sortBy = criteria;
+                },
+            },
+            computed: {
+                cartItemCount() {
+                    return this.cart.length || "";
+                },
+                cartItems() {
+                    return this.products.filter(product => this.cart.includes(product.id));
+                },
+                cartTotal() {
+                    return this.cartItems.reduce((total, product) => {
+                        return total + product.price * this.cartCount(product.id);
+                    }, 0);
+                },
+                filteredProducts() {
+                    const query = this.searchQuery.toLowerCase();
+                    return this.sortedProducts.filter(product =>
+                        product.title.toLowerCase().includes(query) ||
+                        product.description.toLowerCase().includes(query)
+                    );
+                },
+                sortedProducts() {
+                    return [...this.products].sort((a, b) => {
+                        if (this.sortBy === "name") {
+                            return a.title.localeCompare(b.title);
+                        } else if (this.sortBy === "price") {
+                            return a.price - b.price;
+                        } else if (this.sortBy === "inventory") {
+                            return a.availableInventory - b.availableInventory;
+                        }
+                        return 0;
+                    });
+                },
+            },
+        });
+    </script>
+</body>
+
+</html>
