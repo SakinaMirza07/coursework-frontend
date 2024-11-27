@@ -4,7 +4,6 @@
 <head>
     <title>Vue.js</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
-    <script src="products.js"></script>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
@@ -33,7 +32,7 @@
                     </figure>
                     <h2 v-text="product.title"></h2>
                     <p v-html="product.description">Description:</p>
-                    <p v-text="product.availability">Availability:</p>
+                    <p v-text="product.availableInventory">Availability:</p>
                     <p>Price: {{product.price}}</p>
                     <button v-on:click="addToCart(product)" v-if="canAddToCart(product)">
                         Add to Cart
