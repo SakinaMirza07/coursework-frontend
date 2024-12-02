@@ -11,9 +11,9 @@
 <body>
     <div id="app">
         <header>
-            <h1 v-text="sitename">{{sitename}}</h1>
+            <h1 v-text="sitename">{{ sitename }}</h1>
             <button v-on:click="showCheckout">
-                {{cartItemCount}}
+                {{ cartItemCount }}
                 <i class="fas fa-shopping-cart"></i> Checkout
             </button>
             <input type="text" v-model="searchQuery" placeholder="Search for products..." class="search-bar" />
@@ -32,9 +32,9 @@
                             <img v-bind:src="product.image" alt="Product Image" />
                         </figure>
                         <h2 v-text="product.title"></h2>
-                        <p v-html="product.description">Description:</p>
-                        <p v-text="product.availableInventory">Availability:</p>
-                        <p>Price: {{product.price}}</p>
+                        <p v-html="product.description"></p>
+                        <p>Availability: {{ product.availableInventory }}</p>
+                        <p>Price: {{ product.price }}</p>
                         <button v-on:click="addToCart(product)" v-if="canAddToCart(product)">
                             Add to Cart
                         </button>
@@ -43,7 +43,7 @@
                         </button>
                         <span v-if="product.availableInventory === cartCount(product.id)"> All Out </span>
                         <span v-else-if="product.availableInventory - cartCount(product.id) < 5">
-                            Only {{product.availableInventory - cartCount(product.id)}} left!
+                            Only {{ product.availableInventory - cartCount(product.id) }} left!
                         </span>
                         <span v-else> Buy Now </span>
 
@@ -65,23 +65,33 @@
                         <button v-on:click="removeFromCart(item)">Delete Item</button>
                     </div>
                     <p><strong>Total:</strong> {{ cartTotal }}</p>
-                    <button v-on:click="submitForm">Place Order</button>
                 </div>
                 <div v-else>
                     <p>Your cart is empty.</p>
                 </div>
 
-
                 <form>
-                    <p><strong>First Name:</strong> <input v-model.trim="order.firstName" /></p>
-                    <p><strong>Last Name:</strong> <input v-model.trim="order.lastName" /></p>
-                    <p><strong>Number:</strong> <input v-model="order.number" /></p>
+                    <p>
+                        <strong>First Name:</strong>
+                        <input v-model.trim="order.firstName" />
+                        <span class="error" v-text="validationErrors.firstName"></span>
+                    </p>
+                    <p>
+                        <strong>Last Name:</strong>
+                        <input v-model.trim="order.lastName" />
+                        <span class="error" v-text="validationErrors.lastName"></span>
+                    </p>
+                    <p>
+                        <strong>Number:</strong>
+                        <input v-model="order.number" />
+                        <span class="error" v-text="validationErrors.number"></span>
+                    </p>
                 </form>
 
                 <h2>Order Information</h2>
-                <p>First Name: {{order.firstName}}</p>
-                <p>Last Name: {{order.lastName}}</p>
-                <p>Number: {{order.number}}</p>
+                <p>First Name: {{ order.firstName }}</p>
+                <p>Last Name: {{ order.lastName }}</p>
+                <p>Number: {{ order.number }}</p>
 
                 <button v-on:click="addOrder">Place Order</button>
             </div>
@@ -104,54 +114,59 @@
                     number: "",
                 },
                 validationErrors: {
-                firstName: "",
-                lastName: "",
-                number: "",
-            },
+                    firstName: "",
+                    lastName: "",
+                    number: "",
+                },
             },
             created() {
                 this.fetchProducts();
             },
             methods: {
                 validateForm() {
-                let isValid = true;
+                    let isValid = true;
 
-                // Validate first name
-                if (!this.order.firstName.trim()) {
-                    this.validationErrors.firstName = "First name is required.";
-                    isValid = false;
-                } else if (!/^[a-zA-Z]{2,}$/.test(this.order.firstName)) {
-                    this.validationErrors.firstName = "First name must be at least 2 characters and contain only alphabets.";
-                    isValid = false;
-                } else {
-                    this.validationErrors.firstName = "";
-                }
+                    // Validate first name
+                    if (!this.order.firstName.trim()) {
+                        this.validationErrors.firstName = "First name is required.";
+                        isValid = false;
+                    } else if (!/^[a-zA-Z]{2,}$/.test(this.order.firstName)) {
+                        this.validationErrors.firstName = "First name must be at least 2 characters and contain only alphabets.";
+                        isValid = false;
+                    } else {
+                        this.validationErrors.firstName = "";
+                    }
 
-                // Validate last name
-                if (!this.order.lastName.trim()) {
-                    this.validationErrors.lastName = "Last name is required.";
-                    isValid = false;
-                } else if (!/^[a-zA-Z]{2,}$/.test(this.order.lastName)) {
-                    this.validationErrors.lastName = "Last name must be at least 2 characters and contain only alphabets.";
-                    isValid = false;
-                } else {
-                    this.validationErrors.lastName = "";
-                }
+                    // Validate last name
+                    if (!this.order.lastName.trim()) {
+                        this.validationErrors.lastName = "Last name is required.";
+                        isValid = false;
+                    } else if (!/^[a-zA-Z]{2,}$/.test(this.order.lastName)) {
+                        this.validationErrors.lastName = "Last name must be at least 2 characters and contain only alphabets.";
+                        isValid = false;
+                    } else {
+                        this.validationErrors.lastName = "";
+                    }
 
-                // Validate number
-                if (!this.order.number.trim()) {
-                    this.validationErrors.number = "Phone number is required.";
-                    isValid = false;
-                } else if (!/^\d{10,}$/.test(this.order.number)) {
-                    this.validationErrors.number = "Phone number must be at least 10 digits.";
-                    isValid = false;
-                } else {
-                    this.validationErrors.number = "";
-                }
+                    // Validate number
+                    if (!this.order.number.trim()) {
+                        this.validationErrors.number = "Phone number is required.";
+                        isValid = false;
+                    } else if (!/^\d{10,}$/.test(this.order.number)) {
+                        this.validationErrors.number = "Phone number must be at least 10 digits.";
+                        isValid = false;
+                    } else {
+                        this.validationErrors.number = "";
+                    }
 
-                return isValid;
-            },
+                    return isValid;
+                },
                 addOrder() {
+                    if (!this.validateForm()) {
+                        alert("Please correct the errors in the form.");
+                        return;
+                    }
+
                     const orderData = {
                         items: this.cartItems.map((item) => ({
                             id: item.id,
@@ -174,36 +189,40 @@
                                 alert("Order placed successfully!");
                                 this.cart = [];
                                 this.order = { firstName: "", lastName: "", number: "" };
+                                this.validationErrors = { firstName: "", lastName: "", number: "" };
                             } else {
                                 alert("Failed to place the order.");
                             }
                         })
                         .catch((error) => console.error("Error:", error));
-                    alert("Order submitted");
-
                 },
                 fetchProducts() {
                     fetch("http://localhost:3000/collection/products")
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error("Failed to fetch products");
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            this.products = data;
-                        })
-                        .catch(error => {
-                            console.error("Error fetching products:", error);
-                        });
+                        .then(response => response.json())
+                        .then(data => this.products = data)
+                        .catch(error => console.error("Error fetching products:", error));
                 },
-                addToCart: function (product) {
+                fetchSearchResults() {
+                    const query = this.searchQuery.trim();
+                    if (query) {
+                        fetch(`http://localhost:3000/search?q=${query}`)
+                            .then(response => response.json())
+                            .then(data => this.searchResults = data)
+                            .catch(error => console.error("Error fetching search results:", error));
+                    } else {
+                        this.searchResults = [];
+                    }
+                },
+                filteredProducts() {
+                    return this.searchResults.length ? this.searchResults : this.products;
+                },
+                addToCart(product) {
                     this.cart.push(product.id);
                 },
-                removeFromCart: function (item) {
+                removeFromCart(item) {
                     const index = this.cart.findIndex(cartId => cartId === item.id);
                     if (index !== -1) {
-                        this.cart.splice(index, 1); // Remove one instance of the product ID
+                        this.cart.splice(index, 1);
                     }
                 },
                 showCheckout() {
