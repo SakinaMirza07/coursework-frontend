@@ -11,7 +11,7 @@
 <body>
     <div id="app">
         <header>
-            <h1 v-text="sitename">{{ sitename }}</h1>
+            <h1 v-text="sitename"></h1>
             <button v-on:click="showCheckout">
                 {{ cartItemCount }}
                 <i class="fas fa-shopping-cart"></i> Checkout
@@ -21,6 +21,7 @@
                 <option value="name">Sort by Name</option>
                 <option value="price">Sort by Price</option>
                 <option value="inventory">Sort by Inventory</option>
+                <option value="location">Sort by Location</option>
             </select>
         </header>
 
@@ -33,6 +34,7 @@
                         </figure>
                         <h2 v-text="product.title"></h2>
                         <p v-html="product.description"></p>
+                        <p v-html="product.location"></p>
                         <p>Availability: {{ product.availableInventory }}</p>
                         <p>Price: {{ product.price }}</p>
                         <button v-on:click="addToCart(product)" v-if="canAddToCart(product)">
@@ -82,7 +84,7 @@
                         <span class="error" v-text="validationErrors.lastName"></span>
                     </p>
                     <p>
-                        <strong>Number:</strong>
+                        <strong>Phone Number:</strong>
                         <input v-model="order.number" />
                         <span class="error" v-text="validationErrors.number"></span>
                     </p>
@@ -118,6 +120,7 @@
                     lastName: "",
                     number: "",
                 },
+                searchResults: [], // Needed for search logic
             },
             created() {
                 this.fetchProducts();
@@ -131,7 +134,7 @@
                         this.validationErrors.firstName = "First name is required.";
                         isValid = false;
                     } else if (!/^[a-zA-Z]{2,}$/.test(this.order.firstName)) {
-                        this.validationErrors.firstName = "First name must be at least 2 characters and contain only alphabets.";
+                        this.validationErrors.firstName = "First name must be at least 2 characters.";
                         isValid = false;
                     } else {
                         this.validationErrors.firstName = "";
@@ -142,7 +145,7 @@
                         this.validationErrors.lastName = "Last name is required.";
                         isValid = false;
                     } else if (!/^[a-zA-Z]{2,}$/.test(this.order.lastName)) {
-                        this.validationErrors.lastName = "Last name must be at least 2 characters and contain only alphabets.";
+                        this.validationErrors.lastName = "Last name must be at least 2 characters.";
                         isValid = false;
                     } else {
                         this.validationErrors.lastName = "";
@@ -202,25 +205,11 @@
                         .then(data => this.products = data)
                         .catch(error => console.error("Error fetching products:", error));
                 },
-                fetchSearchResults() {
-                    const query = this.searchQuery.trim();
-                    if (query) {
-                        fetch(`http://localhost:3000/search?q=${query}`)
-                            .then(response => response.json())
-                            .then(data => this.searchResults = data)
-                            .catch(error => console.error("Error fetching search results:", error));
-                    } else {
-                        this.searchResults = [];
-                    }
-                },
-                filteredProducts() {
-                    return this.searchResults.length ? this.searchResults : this.products;
-                },
                 addToCart(product) {
                     this.cart.push(product.id);
                 },
                 removeFromCart(item) {
-                    const index = this.cart.findIndex(cartId => cartId === item.id);
+                    const index = this.cart.indexOf(item.id);
                     if (index !== -1) {
                         this.cart.splice(index, 1);
                     }
@@ -254,7 +243,8 @@
                     const query = this.searchQuery.toLowerCase();
                     return this.sortedProducts.filter(product =>
                         product.title.toLowerCase().includes(query) ||
-                        product.description.toLowerCase().includes(query)
+                        product.description.toLowerCase().includes(query) ||
+                        product.location.toLowerCase().includes(query)
                     );
                 },
                 sortedProducts() {
