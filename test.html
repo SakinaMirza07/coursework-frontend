@@ -34,7 +34,7 @@
                         </figure>
                         <h2 v-text="product.title"></h2>
                         <p v-html="product.description"></p>
-                        <p v-html="product.location"></p>
+                        <p v-html="product.location">Location:</p>
                         <p>Availability: {{ product.availableInventory }}</p>
                         <p>Price: {{ product.price }}</p>
                         <button v-on:click="addToCart(product)" v-if="canAddToCart(product)">
@@ -255,6 +255,9 @@
                             return a.price - b.price;
                         } else if (this.sortBy === "inventory") {
                             return a.availableInventory - b.availableInventory;
+                        }
+                        else if (this.sortBy === "location") {
+                            return a.location.localeCompare(b.location);
                         }
                         return 0;
                     });
