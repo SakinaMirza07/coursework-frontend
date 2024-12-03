@@ -17,6 +17,7 @@
                 <i class="fas fa-shopping-cart"></i> Checkout
             </button>
             <input type="text" v-model="searchQuery" placeholder="Search for products..." class="search-bar" />
+            <button v-on:click="fetchSearchResults">Search</button> 
             <select v-on:change="setSortBy($event.target.value)">
                 <option value="name">Sort by Name</option>
                 <option value="price">Sort by Price</option>
@@ -204,6 +205,20 @@
                         .then(response => response.json())
                         .then(data => this.products = data)
                         .catch(error => console.error("Error fetching products:", error));
+                },
+                fetchSearchResults() {
+                    const query = this.searchQuery.trim();
+                    if (query) {
+                        fetch(`http://localhost:3000/search?q=${query}`)
+                            .then(response => response.json())
+                            .then(data => this.searchResults = data)
+                            .catch(error => console.error("Error fetching search results:", error));
+                    } else {
+                        this.searchResults = [];
+                    }
+                },
+                filteredProducts() {
+                    return this.searchResults.length ? this.searchResults : this.products;
                 },
                 addToCart(product) {
                     this.cart.push(product.id);

@@ -69,6 +69,19 @@ p {
     margin: 10px 0;
 }
 
+.flex {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.product {
+    border: 2px solid grey;
+    border-radius: 5px;
+    margin: 10px;
+    width: 250px;
+    padding: 5px;
+}
+
 .product-card {
     background-color: white;
     border-radius: 10px;
