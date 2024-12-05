@@ -37,17 +37,14 @@
                         <p v-html="product.location">Location:</p>
                         <p>Availability: {{ product.availableInventory }}</p>
                         <p>Price: {{ product.price }}</p>
-                        <button v-on:click="addToCart(product)" v-if="canAddToCart(product)">
-                            Add to Cart
-                        </button>
-                        <button disabled v-else>
-                            Add to Cart
+                        <button v-on:click="addToCart(product.id)" :disabled="!canAddToCart(product)">
+                            {{ canAddToCart(product) ? 'Add to Cart' : 'Sold Out' }}
                         </button>
                         <span v-if="product.availableInventory === cartCount(product.id)"> All Out </span>
                         <span v-else-if="product.availableInventory - cartCount(product.id) < 5">
                             Only {{ product.availableInventory - cartCount(product.id) }} left!
                         </span>
-                        <span v-else> Buy Now </span>
+                        <span v-else> Book Now </span>
 
                         <div>
                             <span v-for="n in product.rating">★</span>
@@ -64,7 +61,7 @@
                         <h3>{{ item.title }}</h3>
                         <p>Price: {{ item.price }}</p>
                         <p>Quantity: {{ cartCount(item.id) }}</p>
-                        <button v-on:click="removeFromCart(item)">Delete Item</button>
+                        <button v-on:click="removeFromCart(item.id)">Delete Item</button>
                     </div>
                     <p><strong>Total:</strong> {{ cartTotal }}</p>
                 </div>
@@ -120,102 +117,42 @@
                     lastName: "",
                     number: "",
                 },
-                searchResults: [], // Needed for search logic
             },
             created() {
                 this.fetchProducts();
             },
             methods: {
-                validateForm() {
-                    let isValid = true;
+                addToCart(productId) {
+                    const product = this.products.find(item => item.id === productId);
+                    console.log("Product to add:", product);
 
-                    // Validate first name
-                    if (!this.order.firstName.trim()) {
-                        this.validationErrors.firstName = "First name is required.";
-                        isValid = false;
-                    } else if (!/^[a-zA-Z]{2,}$/.test(this.order.firstName)) {
-                        this.validationErrors.firstName = "First name must be at least 2 characters.";
-                        isValid = false;
+                    if (product && this.canAddToCart(product)) {
+                        this.cart.push(productId); 
+                        product.availableInventory -= 1; 
+                        console.log("Cart updated:", this.cart);
+                        console.log("Updated spaces for product:", product.availableInventory);
                     } else {
-                        this.validationErrors.firstName = "";
+                        alert("No spaces available for this activity!");
                     }
-
-                    // Validate last name
-                    if (!this.order.lastName.trim()) {
-                        this.validationErrors.lastName = "Last name is required.";
-                        isValid = false;
-                    } else if (!/^[a-zA-Z]{2,}$/.test(this.order.lastName)) {
-                        this.validationErrors.lastName = "Last name must be at least 2 characters.";
-                        isValid = false;
-                    } else {
-                        this.validationErrors.lastName = "";
-                    }
-
-                    // Validate number
-                    if (!this.order.number.trim()) {
-                        this.validationErrors.number = "Phone number is required.";
-                        isValid = false;
-                    } else if (!/^\d{10,}$/.test(this.order.number)) {
-                        this.validationErrors.number = "Phone number must be at least 10 digits.";
-                        isValid = false;
-                    } else {
-                        this.validationErrors.number = "";
-                    }
-
-                    return isValid;
                 },
-                addOrder() {
-                    if (!this.validateForm()) {
-                        alert("Please correct the errors in the form.");
-                        return;
+                removeFromCart(productId) {
+                    const index = this.cart.indexOf(productId);
+                    if (index > -1) {
+                        this.cart.splice(index, 1);
+
+                        const product = this.products.find(item => item.id === productId);
+                        if (product) {
+                            product.availableInventory += 1;
+                            console.log("Updated spaces for product:", product.availableInventory);
+                        }
+                        console.log("Cart updated:", this.cart);
                     }
-
-                    const orderData = {
-                        items: this.cartItems.map((item) => ({
-                            id: item.id,
-                            title: item.title,
-                        })),
-                        firstName: this.order.firstName,
-                        lastName: this.order.lastName,
-                        phone: this.order.number,
-                    };
-
-                    fetch("http://localhost:3000/collection/orders", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(orderData),
-                    })
-                        .then((response) => {
-                            if (response.ok) {
-                                alert("Order placed successfully!");
-                                this.cart = [];
-                                this.order = { firstName: "", lastName: "", number: "" };
-                                this.validationErrors = { firstName: "", lastName: "", number: "" };
-                            } else {
-                                alert("Failed to place the order.");
-                            }
-                        })
-                        .catch((error) => console.error("Error:", error));
                 },
                 fetchProducts() {
                     fetch("http://localhost:3000/collection/products")
                         .then(response => response.json())
                         .then(data => this.products = data)
                         .catch(error => console.error("Error fetching products:", error));
-                },
-                addToCart(product) {
-                    this.cart.push(product.id);
-                },
-                removeFromCart(item) {
-                    const index = this.cart.indexOf(item.id);
-                    if (index !== -1) {
-                        this.cart.splice(index, 1);
-                    }
-                },
-                showCheckout() {
-                    this.showProduct = !this.showProduct;
                 },
                 canAddToCart(product) {
                     return product.availableInventory > this.cartCount(product.id);
@@ -255,8 +192,7 @@
                             return a.price - b.price;
                         } else if (this.sortBy === "inventory") {
                             return a.availableInventory - b.availableInventory;
-                        }
-                        else if (this.sortBy === "location") {
+                        } else if (this.sortBy === "location") {
                             return a.location.localeCompare(b.location);
                         }
                         return 0;
