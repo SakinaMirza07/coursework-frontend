@@ -30,19 +30,21 @@
                 <div class="flex">
                     <div v-for="product in filteredProducts" :key="product.id" class="product">
                         <figure>
-                            <img v-bind:src="product.image" alt="Product Image" />
+                            <img v-bind:src="backendLink(product.image)" alt="Product Image" />
                         </figure>
                         <h2 v-text="product.title"></h2>
                         <p v-html="product.description"></p>
-                        <p v-html="product.location">Location:</p>
+                        <p>Location: {{ product.location }}</p>
                         <p>Availability: {{ product.availableInventory }}</p>
                         <p>Price: {{ product.price }}</p>
-                        <button v-on:click="addToCart(product.id)" :disabled="!canAddToCart(product)">
-                            {{ canAddToCart(product) ? 'Add to Cart' : 'Sold Out' }}
+                        
+                        <button v-on:click="addToCart(product)" :disabled="product.availableInventory <= 0">
+                            {{ product.availableInventory > 0 ? 'Add to Cart' : 'Sold Out' }}
                         </button>
-                        <span v-if="product.availableInventory === cartCount(product.id)"> All Out </span>
-                        <span v-else-if="product.availableInventory - cartCount(product.id) < 5">
-                            Only {{ product.availableInventory - cartCount(product.id) }} left!
+
+                        <span v-if="product.availableInventory === 0"> All Out </span>
+                        <span v-else-if="product.availableInventory <= 5">
+                            Hurry! Only {{ product.availableInventory }} left!
                         </span>
                         <span v-else> Book Now </span>
 
@@ -61,7 +63,7 @@
                         <h3>{{ item.title }}</h3>
                         <p>Price: {{ item.price }}</p>
                         <p>Quantity: {{ cartCount(item.id) }}</p>
-                        <button v-on:click="removeFromCart(item.id)">Delete Item</button>
+                        <button v-on:click="removeFromCart(item)">Delete Item</button>
                     </div>
                     <p><strong>Total:</strong> {{ cartTotal }}</p>
                 </div>
@@ -117,51 +119,71 @@
                     lastName: "",
                     number: "",
                 },
+                 searchResults: [],
             },
             created() {
                 this.fetchProducts();
             },
             methods: {
-                addToCart(productId) {
-                    const product = this.products.find(item => item.id === productId);
-                    console.log("Product to add:", product);
-
-                    if (product && this.canAddToCart(product)) {
-                        this.cart.push(productId); 
-                        product.availableInventory -= 1; 
-                        console.log("Cart updated:", this.cart);
-                        console.log("Updated spaces for product:", product.availableInventory);
-                    } else {
-                        alert("No spaces available for this activity!");
-                    }
-                },
-                removeFromCart(productId) {
-                    const index = this.cart.indexOf(productId);
-                    if (index > -1) {
-                        this.cart.splice(index, 1);
-
-                        const product = this.products.find(item => item.id === productId);
-                        if (product) {
-                            product.availableInventory += 1;
-                            console.log("Updated spaces for product:", product.availableInventory);
-                        }
-                        console.log("Cart updated:", this.cart);
-                    }
-                },
                 fetchProducts() {
-                    fetch("http://localhost:3000/collection/products")
+                    fetch("https://coursework-backend-1.onrender.com/collection/products")
                         .then(response => response.json())
                         .then(data => this.products = data)
                         .catch(error => console.error("Error fetching products:", error));
                 },
-                canAddToCart(product) {
-                    return product.availableInventory > this.cartCount(product.id);
+                addToCart(product) {
+                    if (product.availableInventory > 0) {
+                        this.cart.push(product.id);
+                        product.availableInventory--; // Reduce inventory
+                    }
                 },
-                cartCount(id) {
-                    return this.cart.filter(cartId => cartId === id).length;
+                removeFromCart(item) {
+                    const index = this.cart.indexOf(item.id);
+                    if (index !== -1) {
+                        this.cart.splice(index, 1);
+                        item.availableInventory++; // Revert inventory
+                    }
+                },
+                showCheckout() {
+                    this.showProduct = !this.showProduct;
                 },
                 setSortBy(criteria) {
                     this.sortBy = criteria;
+                },
+                validateForm() {
+                    let isValid = true;
+
+                    if (!this.order.firstName.trim()) {
+                        this.validationErrors.firstName = "First name is required.";
+                        isValid = false;
+                    } else {
+                        this.validationErrors.firstName = "";
+                    }
+
+                    if (!this.order.lastName.trim()) {
+                        this.validationErrors.lastName = "Last name is required.";
+                        isValid = false;
+                    } else {
+                        this.validationErrors.lastName = "";
+                    }
+
+                    if (!/^\d{10,}$/.test(this.order.number.trim())) {
+                        this.validationErrors.number = "Phone number must be at least 10 digits.";
+                        isValid = false;
+                    } else {
+                        this.validationErrors.number = "";
+                    }
+
+                    return isValid;
+                },
+                addOrder() {
+                    if (this.validateForm()) {
+                        alert("Order placed!");
+                        this.cart = [];
+                    }
+                },
+                backendLink(route) {
+                    return `https://coursework-backend-1.onrender.com/${route}`;
                 },
             },
             computed: {
@@ -175,6 +197,9 @@
                     return this.cartItems.reduce((total, product) => {
                         return total + product.price * this.cartCount(product.id);
                     }, 0);
+                },
+                cartCount(id) {
+                    return this.cart.filter(cartId => cartId === id).length;
                 },
                 filteredProducts() {
                     const query = this.searchQuery.toLowerCase();
