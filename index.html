@@ -185,6 +185,9 @@
                         this.cart = [];
                     }
                 },
+                cartCount(id) {
+                    return this.cart.filter(cartId => cartId === id).length;
+                },
                 backendLink(route) {
                     return `https://coursework-backend-1.onrender.com/${route}`;
                 },
@@ -200,9 +203,6 @@
                     return this.cartItems.reduce((total, product) => {
                         return total + product.price * this.cartCount(product.id);
                     }, 0);
-                },
-                cartCount(id) {
-                    return this.cart.filter(cartId => cartId === id).length;
                 },
                 filteredProducts() {
                     const query = this.searchQuery.toLowerCase();
