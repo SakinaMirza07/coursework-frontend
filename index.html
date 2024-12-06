@@ -37,7 +37,7 @@
                         <p>Location: {{ product.location }}</p>
                         <p>Availability: {{ product.availableInventory }}</p>
                         <p>Price: {{ product.price }}</p>
-                        
+
                         <button v-on:click="addToCart(product)" :disabled="product.availableInventory <= 0">
                             {{ product.availableInventory > 0 ? 'Add to Cart' : 'Sold Out' }}
                         </button>
@@ -122,22 +122,43 @@
                     lastName: "",
                     number: "",
                 },
-                 searchResults: [],
+                searchResults: [],
             },
             created() {
                 this.fetchProducts();
             },
             methods: {
                 fetchProducts() {
-                    fetch("https://coursework-backend-1.onrender.com/collection/products")
+                    fetch("http://localhost:3000/collection/products")
                         .then(response => response.json())
                         .then(data => this.products = data)
                         .catch(error => console.error("Error fetching products:", error));
                 },
                 addToCart(product) {
                     if (product.availableInventory > 0) {
-                        this.cart.push(product.id);
-                        product.availableInventory--; // Reduce inventory
+                        fetch(`http://localhost:3000/collection/products/${product._id}`, {
+                            method: "PUT",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                availableInventory: product.availableInventory - 1, 
+                            }),
+                        })
+                            .then((response) => {
+                                if (!response.ok) {
+                                    throw new Error("Failed to update inventory");
+                                }
+                                return response.json();
+                            })
+                            .then((data) => {
+                                console.log(data.msg);
+                                this.fetchProducts(); 
+                                this.cart.push(product.id); 
+                            })
+                            .catch((error) => {
+                                console.error("Error updating inventory:", error);
+                            });
                     }
                 },
                 removeFromCart(item) {
@@ -180,10 +201,40 @@
                     return isValid;
                 },
                 addOrder() {
-                    if (this.validateForm()) {
-                        alert("Order placed!");
-                        this.cart = [];
+                    if (!this.validateForm()) {
+                        alert("Please correct the errors in the form.");
+                        return;
                     }
+
+                    const orderData = {
+                        items: this.cartItems.map((item) => ({
+                            id: item.id,
+                            title: item.title,
+                        })),
+                        firstName: this.order.firstName,
+                        lastName: this.order.lastName,
+                        phone: this.order.number,
+                    };
+
+                    fetch("https://coursework-backend-1.onrender.com/collection/orders", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(orderData),
+                    })
+                        .then((response) => {
+                            if (response.ok) {
+                                alert("Order placed successfully!");
+                                this.cart = [];
+                                this.order = { firstName: "", lastName: "", number: "" };
+                                this.validationErrors = { firstName: "", lastName: "", number: "" };
+                            } else {
+                                alert("Failed to place the order.");
+                            }
+                        })
+                        .catch((error) => console.error("Error:", error));
+
                 },
                 cartCount(id) {
                     return this.cart.filter(cartId => cartId === id).length;
