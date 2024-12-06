@@ -60,6 +60,9 @@
                 <h2>Checkout</h2>
                 <div v-if="cartItems.length > 0">
                     <div v-for="item in cartItems" :key="item.id" class="checkout-item">
+                        <figure>
+                            <img v-bind:src="backendLink(item.image)" alt="Product Image" class="cart-product-image" />
+                        </figure>
                         <h3>{{ item.title }}</h3>
                         <p>Price: {{ item.price }}</p>
                         <p>Quantity: {{ cartCount(item.id) }}</p>
