@@ -16,7 +16,8 @@
                 {{ cartItemCount }}
                 <i class="fas fa-shopping-cart"></i> Checkout
             </button>
-            <input type="text" v-model="searchQuery" placeholder="Search for products..." class="search-bar" />
+            <input type="text" v-model="searchQuery" placeholder="Search for products..." class="search-bar"
+                v-on:input="debouncedFetch" />
             <select v-on:change="setSortBy($event.target.value)">
                 <option value="name">Sort by Name</option>
                 <option value="price">Sort by Price</option>
@@ -126,6 +127,7 @@
             },
             created() {
                 this.fetchProducts();
+                this.debouncedFetch = this.debounce(this.fetchSearchResults, 300);
             },
             methods: {
                 fetchProducts() {
@@ -164,7 +166,7 @@
                 removeFromCart(item) {
                     const index = this.cart.indexOf(item.id);
                     if (index !== -1) {
-                        this.cart.splice(index, 1); 
+                        this.cart.splice(index, 1);
 
                         fetch(`https://coursework-backend-1.onrender.com/collection/products/${item._id}`, {
                             method: "PUT",
@@ -172,7 +174,7 @@
                                 "Content-Type": "application/json",
                             },
                             body: JSON.stringify({
-                                availableInventory: item.availableInventory + 1, 
+                                availableInventory: item.availableInventory + 1,
                             }),
                         })
                             .then((response) => {
@@ -263,6 +265,34 @@
                 },
                 backendLink(route) {
                     return `https://coursework-backend-1.onrender.com/${route}`;
+                },
+                debounce(func, wait) {
+                    let timeout;
+                    return (...args) => {
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => func.apply(this, args), wait);
+                    };
+                },
+                
+                fetchSearchResults() {
+                    if (this.searchQuery.trim() === "") {
+                        this.searchResults = [];
+                        return;
+                    }
+
+                    fetch(`https://coursework-backend-1.onrender.com/search?q=${this.searchQuery}`)
+                        .then((response) => {
+                            if (!response.ok) {
+                                throw new Error("Error fetching search results.");
+                            }
+                            return response.json();
+                        })
+                        .then((data) => {
+                            this.searchResults = data;
+                        })
+                        .catch((error) => {
+                            console.error("Error:", error);
+                        });
                 },
             },
             computed: {
